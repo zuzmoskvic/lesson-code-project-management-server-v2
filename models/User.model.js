@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { useSearchParams } = require("react-router-dom");
 const { Schema, model } = mongoose;
 
 const userSchema = new Schema({

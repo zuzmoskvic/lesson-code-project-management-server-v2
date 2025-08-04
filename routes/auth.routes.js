@@ -1,8 +1,10 @@
 const express = require("express");
-const router = express.Router();
 const mongoose = require("mongoose");
-const User = require("../models/Task.model");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User.model");
 
+const router = express.Router();
 const { isAuthenticated } = require("./../middleware/jwt.middleware.js"); 
  
 const saltRounds = 10;
@@ -13,21 +15,21 @@ router.post("/auth/signup", (req, res, next) => {
 
   // Check if the email or password or name is provided as an empty string 
   if ( email === "" || password === "" || name === "") {
-    res.status(400).json({ message: "Provide email, password and name" })
+    res.status(400).json({ message: "Provide email, password and name" });
     return ;
   }
 
   // Use regex to validate the email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   if (!emailRegex.test(email)) {
-    res.status(400).json({ message: "Provide a valid email" })
+    res.status(400).json({ message: "Provide a valid email" });
     return ;
   }
 
   // Use regex to validate the password format
   const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
   if (!passwordRegex.test(password)) {
-    res.status(400).json({ message: 'Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.'  })
+    res.status(400).json({ message: 'Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.'  });
     return ;
   }
 
@@ -36,7 +38,7 @@ router.post("/auth/signup", (req, res, next) => {
   User.findOne({ email })
     .then((foundUser) => {
       if (foundUser) {
-        res.status(400).json({ message: "User already exists." })
+        res.status(400).json({ message: "User already exists." });
         return;
       }
 
@@ -81,7 +83,7 @@ router.post("/auth/login", (req, res, next) => {
     // Check if same user already exists 
     if (!foundUser) {
       // If the user is not found, send an error response
-      res.status(400).json({  message: "User not found." });
+      res.status(401).json({  message: "User not found." });
       return;
     }
 
@@ -90,10 +92,10 @@ router.post("/auth/login", (req, res, next) => {
 
     if (passwordCorrect) {
           // Deconstruct the user object to omit the password
-          const { _id, email, password } = foundUser; 
+          const { _id, email, name } = foundUser; 
           
           // Create an object that will be set as the token payload
-          const payload = { _id, email, name }
+          const payload = { _id, email, name };
   
           // Create and sign the token
         const authToken = jwt.sign(
@@ -114,10 +116,9 @@ router.post("/auth/login", (req, res, next) => {
   });
 
 // GET  /auth/verify  -  Used to verify JWT stored on the client
-router.get('/verify', isAuthenticated, (req, res, next) => {       
+router.get('/verify', isAuthenticated, (req, res, next) => {     
+  console.log(`req.payload`, req.payload);  
   res.status(200).json(req.payload);
 });
-
-// POST /auth/verify
 
 module.exports = router;
